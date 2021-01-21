@@ -392,7 +392,10 @@ body {
   overflow: auto;
 }
 </style>
-  <script codemirror>
+  <script src="../node_modules/codemirror/lib/codemirror.js" codemirror></script>
+</head>
+<body style="border: solid 1px red">
+  <script index>
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: https://codemirror.net/LICENSE
 // This is CodeMirror (https://codemirror.net), a code editor
@@ -11662,11 +11665,7 @@ body {
     CodeMirror.version = "5.59.2";
     return CodeMirror;
 })));
-//# sourceMappingURL=codemirror.js.map
-</script>
-</head>
-<body style="border: solid 1px red">
-  <script index>
+
 /// <reference types="codemirror" />
 var editorHost = document.createElement('div');
 editorHost.className = 'editorHost';

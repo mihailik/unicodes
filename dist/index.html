@@ -380,18 +380,21 @@ body {
   overflow: hidden;
 }
 
-.editorHost {
+#editorHost {
   position: absolute;
   left: 0; top: 0;
   width: 70%;
   height: 100%;
 }
 
-.editorHost .CodeMirror {
+#editorHost .CodeMirror {
   font: inherit;
+  font-size: 200%;
+  width: 100%;
+  height: 100%;
 }
 
-.sideHost {
+#sideHost {
   left: 70%; top: 0;
   width: 30%;
   height: 100%;
@@ -403,14 +406,79 @@ body {
 function initAll() {
     var editorHost = document.getElementById('editorHost');
     var sideHost = document.getElementById('sideHost');
-    var editor = initEditor(editorHost);
+    var sideController = initSide(sideHost);
+    var editor = initEditor(editorHost, {
+        onSelectionChanged: function (text) {
+            sideController.updateSelection(text);
+        }
+    });
+    editor.focus();
 }
 
-function initEditor(editorHost) {
+function initEditor(editorHost, options) {
+    var urlText = getUrlText();
     var editor = CodeMirror(editorHost, {
-    // yes
+        value: urlText
     });
+    CodeMirror.on(editor, 'changes', handleEditorChanges);
+    CodeMirror.on(editor, 'cursorActivity', handleCursorActivity);
     return editor;
+    var syncEditorUrlTimeout;
+    var syncCursorTimeout;
+    function handleEditorChanges(e_, changes) {
+        clearTimeout(syncEditorUrlTimeout);
+        syncEditorUrlTimeout = setTimeout(updateUrlFromEditor, 600);
+    }
+    function updateUrlFromEditor() {
+        var value = editor.getValue();
+        var urlText = getUrlText();
+        if (urlText === value)
+            return;
+        var usePushState = !!initEditor.usePushState;
+        if (usePushState && typeof history !== 'undefined' && history && typeof history.pushState === 'function') {
+            history.pushState({}, '', location.pathname + '?' + encodeValue(value));
+            location.hash = '';
+        }
+        else {
+            location.hash = '#' + encodeValue(value);
+        }
+    }
+    function encodeValue(value) {
+        return encodeURIComponent(value).replace(/%20/g, ' ');
+    }
+    function getUrlText() {
+        var hashText = decodeURIComponent((location.hash || '').replace(/^#/, ''));
+        var queryText = decodeURI((location.search || '').replace(/^\?/, ''));
+        return (location.hash ? hashText :
+            location.search ? queryText :
+                '');
+    }
+    function handleCursorActivity() {
+        clearTimeout(syncCursorTimeout);
+        syncCursorTimeout = setTimeout(updateSideBarForSelection, 200);
+    }
+    function updateSideBarForSelection() {
+        var selectionText = editor.getSelection();
+        if (!selectionText) {
+            var value = editor.getValue();
+            var cursorOffset = editor.indexFromPos(editor.getCursor());
+            var lead = cursorOffset ? value.charAt(cursorOffset - 1) : '';
+            var trail = cursorOffset < value.length ? value.charAt(cursorOffset) : '';
+            selectionText = lead + trail;
+        }
+        var onSelectionChanged = options && options.onSelectionChanged;
+        if (typeof onSelectionChanged === 'function')
+            onSelectionChanged(selectionText);
+    }
+}
+
+function initSide(sideHost) {
+    return {
+        updateSelection: updateSelection
+    };
+    function updateSelection(text) {
+        sideHost.textContent = text;
+    }
 }
 
 // CodeMirror, copyright (c) by Marijn Haverbeke and others

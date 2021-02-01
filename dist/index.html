@@ -368,12 +368,15 @@ html {
 html {
   width: 100%;
   height: 100%;
+  margin: 0;
+  padding: 0;
   overflow: hidden;
 }
 
 body {
   width: 100%;
   height: 100%;
+  margin: 0;
   overflow: hidden;
 }
 
@@ -384,6 +387,10 @@ body {
   height: 100%;
 }
 
+.editorHost .CodeMirror {
+  font: inherit;
+}
+
 .sideHost {
   left: 70%; top: 0;
   width: 30%;
@@ -392,18 +399,21 @@ body {
   overflow: auto;
 }
 </style>
-  <script src="../node_modules/codemirror/lib/codemirror.js" codemirror></script>
-</head>
-<body>
+  <script codemirror>
+function initAll() {
+    var editorHost = document.getElementById('editorHost');
+    var sideHost = document.getElementById('sideHost');
+    var editor = initEditor(editorHost);
+}
 
-  <div id=editorHost>
-  </div>
+function initEditor(editorHost) {
+    var editor = CodeMirror(editorHost, {
+    // yes
+    });
+    return editor;
+}
 
-  <div id=sideHost>
-  </div>
-
-  <script index>
-/* ./ */
+initAll();
 
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: https://codemirror.net/LICENSE
@@ -11674,22 +11684,19 @@ body {
     CodeMirror.version = "5.59.2";
     return CodeMirror;
 })));
+//# sourceMappingURL=codemirror.js.map
+</script>
+</head>
+<body>
 
-function initAll() {
-    var editorHost = document.getElementById('editorHost');
-    var sideHost = document.getElementById('sideHost');
-    var editor = initEditor(editorHost);
-}
+  <div id=editorHost>
+  </div>
 
-function initEditor(editorHost) {
-    var editor = CodeMirror(editorHost, {
-    // yes
-    });
-    return editor;
-}
+  <div id=sideHost>
+  </div>
 
-initAll();
-//# sourceMappingURL=./.map
+  <script index>
+/* ./ */
 </script>
 
 </body>

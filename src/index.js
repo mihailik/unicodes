@@ -10,5 +10,5 @@ document.body.appendChild(sideHost);
 var editor = CodeMirror(
   editorHost,
   {
-    // yes
+    // yes OK
   });

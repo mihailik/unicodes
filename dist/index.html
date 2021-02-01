@@ -368,13 +368,13 @@ html {
 html {
   width: 100%;
   height: 100%;
-  overflow: auto;
+  overflow: hidden;
 }
 
 body {
   width: 100%;
   height: 100%;
-  overflow: auto;
+  overflow: hidden;
 }
 
 .editorHost {
@@ -394,8 +394,17 @@ body {
 </style>
   <script src="../node_modules/codemirror/lib/codemirror.js" codemirror></script>
 </head>
-<body style="border: solid 1px red">
+<body>
+
+  <div id=editorHost>
+  </div>
+
+  <div id=sideHost>
+  </div>
+
   <script index>
+/* ./ */
+
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: https://codemirror.net/LICENSE
 // This is CodeMirror (https://codemirror.net), a code editor
@@ -11666,17 +11675,21 @@ body {
     return CodeMirror;
 })));
 
-/// <reference types="codemirror" />
-var editorHost = document.createElement('div');
-editorHost.className = 'editorHost';
-document.body.appendChild(editorHost);
-var sideHost = document.createElement('div');
-sideHost.className = 'sideHost';
-document.body.appendChild(sideHost);
-var editor = CodeMirror(editorHost, {
-// yes
-});
-//# sourceMappingURL=index.js.map
+function initAll() {
+    var editorHost = document.getElementById('editorHost');
+    var sideHost = document.getElementById('sideHost');
+    var editor = initEditor(editorHost);
+}
+
+function initEditor(editorHost) {
+    var editor = CodeMirror(editorHost, {
+    // yes
+    });
+    return editor;
+}
+
+initAll();
+//# sourceMappingURL=./.map
 </script>
 
 </body>

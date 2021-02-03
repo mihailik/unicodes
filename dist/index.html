@@ -394,12 +394,62 @@ body {
   height: 100%;
 }
 
+#editorHost .CodeMirror .CodeMirror-lines {
+  padding: 1em;
+}
+
 #sideHost {
   left: 70%; top: 0;
   width: 30%;
   height: 100%;
   position: absolute;
   overflow: auto;
+  background: #f8f8f8;
+  border-left: solid 1px #e9e9e9;
+  padding: 1em;
+  white-space: nowrap;
+  text-align: center;
+  overflow: hidden;
+}
+
+#sideHost .selectedChar {
+  font-size: 400%;
+  height: 1.5em;
+  text-shadow: 1px 1px 1px #e7e7e7, -1px -1px 1px #e7e7e7, 1px 6px 7px #00000087;
+}
+
+#sideHost .selectedCharLead {
+  position: absolute;
+  top: 0.3em; right: 50%;
+  height: 100%;
+  text-align: right;
+  z-index: 1;
+}
+
+#sideHost .selectedCharTrail {
+  position: absolute;
+  top: 0.3em; left: 50%;
+  height: 100%;
+  text-align: left;
+  z-index: 1;
+}
+
+#sideHost .selectedCharMid {
+  position: relative;
+  left: -1px;
+  display: inline-block;
+  width: 8px;
+  height: 100%;
+  background: #ff8900;
+    opacity: 0.8;
+    filter: blur(4px);
+}
+
+
+#sideHost .selectedCharNumbers {
+  position: relative;
+  text-align: right;
+  top: -0.5em;
 }
 </style>
   <script codemirror>
@@ -408,20 +458,22 @@ function initAll() {
     var sideHost = document.getElementById('sideHost');
     var sideController = initSide(sideHost);
     var editor = initEditor(editorHost, {
-        onSelectionChanged: function (text) {
-            sideController.updateSelection(text);
+        onSelectionChanged: function (lead, trail) {
+            sideController.updateSelection(lead, trail);
         }
     });
     editor.focus();
 }
 
 function initEditor(editorHost, options) {
+    var regex_split = new RegExp('', 'ug');
     var urlText = getUrlText();
     var editor = CodeMirror(editorHost, {
         value: urlText
     });
     CodeMirror.on(editor, 'changes', handleEditorChanges);
     CodeMirror.on(editor, 'cursorActivity', handleCursorActivity);
+    handleCursorActivity();
     return editor;
     var syncEditorUrlTimeout;
     var syncCursorTimeout;
@@ -440,7 +492,7 @@ function initEditor(editorHost, options) {
             location.hash = '';
         }
         else {
-            location.hash = '#' + encodeValue(value);
+            location.hash = !value ? '' : '#' + encodeValue(value);
         }
     }
     function encodeValue(value) {
@@ -455,29 +507,53 @@ function initEditor(editorHost, options) {
     }
     function handleCursorActivity() {
         clearTimeout(syncCursorTimeout);
-        syncCursorTimeout = setTimeout(updateSideBarForSelection, 200);
+        syncCursorTimeout = setTimeout(updateSideBarForSelection, 50);
     }
     function updateSideBarForSelection() {
-        var selectionText = editor.getSelection();
-        if (!selectionText) {
-            var value = editor.getValue();
-            var cursorOffset = editor.indexFromPos(editor.getCursor());
-            var lead = cursorOffset ? value.charAt(cursorOffset - 1) : '';
-            var trail = cursorOffset < value.length ? value.charAt(cursorOffset) : '';
-            selectionText = lead + trail;
-        }
         var onSelectionChanged = options && options.onSelectionChanged;
-        if (typeof onSelectionChanged === 'function')
-            onSelectionChanged(selectionText);
+        if (typeof onSelectionChanged === 'function') {
+            var selectionStart = editor.getCursor('start');
+            var selectionEnd = editor.getCursor('end');
+            var cursorCoord = editor.getCursor();
+            if (!CodeMirror.cmpPos(selectionStart, selectionEnd)) {
+                var lineText = editor.getLine(cursorCoord.line);
+                var unicodeChars = lineText.split(regex_split);
+                var charOffset = 0;
+                var charIndex = 0;
+                for (var _i = 0, unicodeChars_1 = unicodeChars; _i < unicodeChars_1.length; _i++) {
+                    var uch = unicodeChars_1[_i];
+                    var next = charOffset + uch.length;
+                    if (next > cursorCoord.ch)
+                        break;
+                    charOffset = next;
+                    charIndex++;
+                }
+                var lead = charIndex ? unicodeChars[charIndex - 1] : '';
+                var trail = unicodeChars[charIndex] || '';
+                onSelectionChanged(/\S/.test(lead) ? [lead] : [], /\S/.test(trail) ? [trail] : []);
+            }
+            else {
+                var selectionText = editor.getRange(selectionStart, selectionEnd);
+                var cursorSelectionOffset = editor.indexFromPos(cursorCoord) - editor.indexFromPos(selectionStart);
+                var lead = selectionText.slice(0, cursorSelectionOffset).replace(/\s+/g, ' ').replace(/^\s+/, '').replace(/\s+$/, '').split(regex_split);
+                var trail = selectionText.slice(cursorSelectionOffset).replace(/\s+/g, ' ').replace(/^\s+/, '').replace(/\s+$/, '').split(regex_split);
+                onSelectionChanged(lead, trail);
+            }
+        }
     }
 }
 
 function initSide(sideHost) {
+    var _a = ['selectedChar', 'selectedCharLead', 'selectedCharMid', 'selectedCharTrail', 'selectedCharNumbers'].map(function (nm) { return sideHost.getElementsByClassName(nm)[0]; }), selectedChar = _a[0], selectedCharLead = _a[1], selectedCharMid = _a[2], selectedCharTrail = _a[3], selectedCharNumbers = _a[4];
     return {
         updateSelection: updateSelection
     };
-    function updateSelection(text) {
-        sideHost.textContent = text;
+    function updateSelection(lead, trail) {
+        var leadText = lead.join('');
+        var trailText = trail.join('');
+        selectedCharLead.textContent = leadText;
+        selectedCharTrail.textContent = trailText;
+        selectedCharNumbers.textContent = (leadText.length + trailText.length) + ' unit' + (leadText.length + trailText.length > 1 ? 's' : '');
     }
 }
 
@@ -11759,11 +11835,15 @@ function initSide(sideHost) {
   </div>
 
   <div id=sideHost>
+    <div class=selectedChar>
+      <span class=selectedCharLead></span><span class=selectedCharMid></span><span class=selectedCharTrail></span>
+    </div>
+    <div class=selectedCharNumbers></div>
   </div>
 
   <script>
 initAll();
-//# sourceMappingURL=index.html.L20.js.map
+//# sourceMappingURL=index.html.L24.js.map
 </script>
 
 

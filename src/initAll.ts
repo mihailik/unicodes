@@ -6,8 +6,8 @@ function initAll() {
   const sideController = initSide(sideHost);
 
   const editor = initEditor(editorHost, {
-    onSelectionChanged(text) {
-      sideController.updateSelection(text);
+    onSelectionChanged(lead, trail) {
+      sideController.updateSelection(lead, trail);
     }
   });
   editor.focus();

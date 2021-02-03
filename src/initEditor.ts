@@ -1,10 +1,12 @@
 declare namespace initEditor {
   type Options = {
-    onSelectionChanged: (selectionText: string) => void;
+    onSelectionChanged: (beforeText: string[], afterText: string[]) => void;
   }
 }
 
 function initEditor(editorHost: HTMLElement, options?: Partial<initEditor.Options>) {
+
+  const regex_split = new RegExp('', 'ug');
 
   const urlText = getUrlText();
   var editor = CodeMirror(
@@ -15,6 +17,8 @@ function initEditor(editorHost: HTMLElement, options?: Partial<initEditor.Option
   
   CodeMirror.on(editor, 'changes', handleEditorChanges);
   CodeMirror.on(editor, 'cursorActivity', handleCursorActivity);
+  handleCursorActivity();
+
   return editor;
 
   var syncEditorUrlTimeout: any;
@@ -37,7 +41,7 @@ function initEditor(editorHost: HTMLElement, options?: Partial<initEditor.Option
       location.hash = '';
     }
     else {
-      location.hash = '#' + encodeValue(value);
+      location.hash = !value ? '' : '#' + encodeValue(value);
     }
   }
 
@@ -57,21 +61,40 @@ function initEditor(editorHost: HTMLElement, options?: Partial<initEditor.Option
 
   function handleCursorActivity() {
     clearTimeout(syncCursorTimeout);
-    syncCursorTimeout = setTimeout(updateSideBarForSelection, 200);
+    syncCursorTimeout = setTimeout(updateSideBarForSelection, 50);
   }
 
   function updateSideBarForSelection() {
-    let selectionText = editor.getSelection();
-    if (!selectionText) {
-      const value = editor.getValue();
-      const cursorOffset = editor.indexFromPos(editor.getCursor());
-      const lead = cursorOffset ? value.charAt(cursorOffset - 1) : '';
-      const trail = cursorOffset < value.length ? value.charAt(cursorOffset) : '';
-      selectionText = lead + trail;
-    }
-
     const onSelectionChanged = options && options.onSelectionChanged;
-    if (typeof onSelectionChanged === 'function')
-      onSelectionChanged(selectionText);
+    if (typeof onSelectionChanged === 'function') {
+      const selectionStart = editor.getCursor('start');
+      const selectionEnd = editor.getCursor('end');
+      const cursorCoord = editor.getCursor();
+      if (!CodeMirror.cmpPos(selectionStart, selectionEnd)) {
+        const lineText = editor.getLine(cursorCoord.line);
+        const unicodeChars = lineText.split(regex_split);
+        let charOffset = 0;
+        let charIndex = 0;
+        for (const uch of unicodeChars) {
+          const next = charOffset + uch.length;
+          if (next > cursorCoord.ch)
+            break;
+          charOffset = next;
+          charIndex++;
+        }
+
+        const lead = charIndex ? unicodeChars[charIndex - 1] : '';
+        const trail = unicodeChars[charIndex] || '';
+        onSelectionChanged(/\S/.test(lead) ? [lead] : [], /\S/.test(trail) ? [trail] : []);
+      }
+      else {
+        const selectionText = editor.getRange(selectionStart, selectionEnd);
+        const cursorSelectionOffset = editor.indexFromPos(cursorCoord) - editor.indexFromPos(selectionStart);
+        const lead = selectionText.slice(0, cursorSelectionOffset).replace(/\s+/g, ' ').replace(/^\s+/, '').replace(/\s+$/, '').split(regex_split);
+        const trail = selectionText.slice(cursorSelectionOffset).replace(/\s+/g, ' ').replace(/^\s+/, '').replace(/\s+$/, '').split(regex_split);
+
+        onSelectionChanged(lead, trail);
+      }
+    }
   }
 }

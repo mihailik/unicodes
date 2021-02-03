@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "danfo src --out ../dist ",
-    "build": "danfo src --out ../dist --watch:no",
+    "start": "danfo",
+    "build": "danfo src --watch:no --server:no",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

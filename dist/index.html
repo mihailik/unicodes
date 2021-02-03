@@ -407,13 +407,13 @@ body {
   background: #f8f8f8;
   border-left: solid 1px #e9e9e9;
   padding: 1em;
-  white-space: nowrap;
   text-align: center;
   overflow: hidden;
 }
 
 #sideHost .selectedChar {
-  font-size: 400%;
+  white-space: nowrap;
+  font-size: 300%;
   height: 1.5em;
   text-shadow: 1px 1px 1px #e7e7e7, -1px -1px 1px #e7e7e7, 1px 6px 7px #00000087;
 }
@@ -451,8 +451,72 @@ body {
   text-align: right;
   top: -0.5em;
 }
+
+#sideHost .charDetails {
+  position: relative;
+  margin-bottom: 0.5em;
+  border: solid 1px #e5e5e5;
+  background: white;
+  border-radius: 1em;
+  padding-bottom: 0.3em;
+}
+
+#sideHost .charDetails .symbol {
+  font-size: 400%;
+}
+
+#sideHost .charDetails .hex {
+  position: absolute;
+  top: 20%;
+  right: 0.5em;
+  width: 4em;
+  text-align: right;
+  font-family: sans-serif;
+}
+
+#sideHost .charDetails .nfc {
+  position: absolute;
+  left: 0.5em;
+  top: 0.5em;
+  font-size: 90%;
+  font-family: sans-serif;
+  opacity: 0.6;
+}
+
+#sideHost .charDetails .nfd {
+  position: absolute;
+  left: 0.5em;
+  bottom: 0.5em;
+  font-size: 90%;
+  font-family: sans-serif;
+  opacity: 0.6;
+}
 </style>
   <script codemirror>
+var conversions = {
+    original: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789',
+    w: {
+        normal: '𝔄𝔅ℭ𝔇𝔈𝔉𝔊ℌℑ𝔍𝔎𝔏𝔐𝔑𝔒𝔓𝔔ℜ𝔖𝔗𝔘𝔙𝔚𝔛𝔜ℨ𝔞𝔟𝔠𝔡𝔢𝔣𝔤𝔥𝔦𝔧𝔨𝔩𝔪𝔫𝔬𝔭𝔮𝔯𝔰𝔱𝔲𝔳𝔴𝔵𝔶𝔷',
+        bold: '𝕬𝕭𝕮𝕯𝕰𝕱𝕲𝕳𝕴𝕵𝕶𝕷𝕸𝕹𝕺𝕻𝕼𝕽𝕾𝕿𝖀𝖁𝖂𝖃𝖄𝖅𝖆𝖇𝖈𝖉𝖊𝖋𝖌𝖍𝖎𝖏𝖐𝖑𝖒𝖓𝖔𝖕𝖖𝖗𝖘𝖙𝖚𝖛𝖜𝖝𝖞𝖟'
+    },
+    coursive: {
+        normal: '𝒜𝐵𝒞𝒟𝐸𝐹𝒢𝐻𝐼𝒥𝒦𝐿𝑀𝒩𝒪𝒫𝒬𝑅𝒮𝒯𝒰𝒱𝒲𝒳𝒴𝒵𝒶𝒷𝒸𝒹𝑒𝒻𝑔𝒽𝒾𝒿𝓀𝓁𝓂𝓃𝑜𝓅𝓆𝓇𝓈𝓉𝓊𝓋𝓌𝓍𝓎𝓏𝟢𝟣𝟤𝟥𝟦𝟧𝟨𝟩𝟪𝟫',
+        bold: '𝓐𝓑𝓒𝓓𝓔𝓕𝓖𝓗𝓘𝓙𝓚𝓛𝓜𝓝𝓞𝓟𝓠𝓡𝓢𝓣𝓤𝓥𝓦𝓧𝓨𝓩𝓪𝓫𝓬𝓭𝓮𝓯𝓰𝓱𝓲𝓳𝓴𝓵𝓶𝓷𝓸𝓹𝓺𝓻𝓼𝓽𝓾𝓿𝔀𝔁𝔂𝔃'
+    },
+    outline: '𝔸𝔹ℂ𝔻𝔼𝔽𝔾ℍ𝕀𝕁𝕂𝕃𝕄ℕ𝕆ℙℚℝ𝕊𝕋𝕌𝕍𝕎𝕏𝕐ℤ𝕒𝕓𝕔𝕕𝕖𝕗𝕘𝕙𝕚𝕛𝕜𝕝𝕞𝕟𝕠𝕡𝕢𝕣𝕤𝕥𝕦𝕧𝕨𝕩𝕪𝕫𝟘𝟙𝟚𝟛𝟜𝟝𝟞𝟟𝟠𝟡',
+    blocks: '🅰🅱🅲🅳🅴🅵🅶🅷🅸🅹🅺🅻🅼🅽🅾🅿🆀🆁🆂🆃🆄🆅🆆🆇🆈🆉',
+    circles: 'ⒶⒷⒸⒹⒺⒻⒼⒽⒾⒿⓀⓁⓂⓃⓄⓅⓆⓇⓈⓉⓊⓋⓌⓍⓎⓏⓐⓑⓒⓓⓔⓕⓖⓗⓘⓙⓚⓛⓜⓝⓞⓟⓠⓡⓢⓣⓤⓥⓦⓧⓨⓩ⓪①②③④⑤⑥⑦⑧⑨',
+    serif: {
+        bold: '𝐀𝐁𝐂𝐃𝐄𝐅𝐆𝐇𝐈𝐉𝐊𝐋𝐌𝐍𝐎𝐏𝐐𝐑𝐒𝐓𝐔𝐕𝐖𝐗𝐘𝐙𝐚𝐛𝐜𝐝𝐞𝐟𝐠𝐡𝐢𝐣𝐤𝐥𝐦𝐧𝐨𝐩𝐪𝐫𝐬𝐭𝐮𝐯𝐰𝐱𝐲𝐳𝟎𝟏𝟐𝟑𝟒𝟓𝟔𝟕𝟖𝟗'
+    },
+    sans: {
+        bold: '𝗔𝗕𝗖𝗗𝗘𝗙𝗚𝗛𝗜𝗝𝗞𝗟𝗠𝗡𝗢𝗣𝗤𝗥𝗦𝗧𝗨𝗩𝗪𝗫𝗬𝗭𝗮𝗯𝗰𝗱𝗲𝗳𝗴𝗵𝗶𝗷𝗸𝗹𝗺𝗻𝗼𝗽𝗾𝗿𝘀𝘁𝘂𝘃𝘄𝘅𝘆𝘇𝟬𝟭𝟮𝟯𝟰𝟱𝟲𝟳𝟴𝟵',
+        italic: '𝘈𝘉𝘊𝘋𝘌𝘍𝘎𝘏𝘐𝘑𝘒𝘓𝘔𝘕𝘖𝘗𝘘𝘙𝘚𝘛𝘜𝘝𝘞𝘟𝘠𝘡𝘢𝘣𝘤𝘥𝘦𝘧𝘨𝘩𝘪𝘫𝘬𝘭𝘮𝘯𝘰𝘱𝘲𝘳𝘴𝘵𝘶𝘷𝘸𝘹𝘺𝘻',
+        boldItalic: '𝘼𝘽𝘾𝘿𝙀𝙁𝙂𝙃𝙄𝙅𝙆𝙇𝙈𝙉𝙊𝙋𝙌𝙍𝙎𝙏𝙐𝙑𝙒𝙓𝙔𝙕𝙖𝙗𝙘𝙙𝙚𝙛𝙜𝙝𝙞𝙟𝙠𝙡𝙢𝙣𝙤𝙥𝙦𝙧𝙨𝙩𝙪𝙫𝙬𝙭𝙮𝙯'
+    },
+    typewriter: '𝙰𝙱𝙲𝙳𝙴𝙵𝙶𝙷𝙸𝙹𝙺𝙻𝙼𝙽𝙾𝙿𝚀𝚁𝚂𝚃𝚄𝚅𝚆𝚇𝚈𝚉𝚊𝚋𝚌𝚍𝚎𝚏𝚐𝚑𝚒𝚓𝚔𝚕𝚖𝚗𝚘𝚙𝚚𝚛𝚜𝚝𝚞𝚟𝚠𝚡𝚢𝚣𝟶𝟷𝟸𝟹𝟺𝟻𝟼𝟽𝟾𝟿'
+};
+
 function initAll() {
     var editorHost = document.getElementById('editorHost');
     var sideHost = document.getElementById('sideHost');
@@ -469,7 +533,8 @@ function initEditor(editorHost, options) {
     var regex_split = new RegExp('', 'ug');
     var urlText = getUrlText();
     var editor = CodeMirror(editorHost, {
-        value: urlText
+        value: urlText,
+        lineWrapping: true
     });
     CodeMirror.on(editor, 'changes', handleEditorChanges);
     CodeMirror.on(editor, 'cursorActivity', handleCursorActivity);
@@ -544,7 +609,11 @@ function initEditor(editorHost, options) {
 }
 
 function initSide(sideHost) {
-    var _a = ['selectedChar', 'selectedCharLead', 'selectedCharMid', 'selectedCharTrail', 'selectedCharNumbers'].map(function (nm) { return sideHost.getElementsByClassName(nm)[0]; }), selectedChar = _a[0], selectedCharLead = _a[1], selectedCharMid = _a[2], selectedCharTrail = _a[3], selectedCharNumbers = _a[4];
+    var _a = [
+        'selectedChar', 'selectedCharLead', 'selectedCharMid', 'selectedCharTrail',
+        'selectedCharNumbers',
+        'leadCharDetails', 'trailCharDetails'
+    ].map(function (nm) { return sideHost.getElementsByClassName(nm)[0]; }), selectedChar = _a[0], selectedCharLead = _a[1], selectedCharMid = _a[2], selectedCharTrail = _a[3], selectedCharNumbers = _a[4], leadCharDetails = _a[5], trailCharDetails = _a[6];
     return {
         updateSelection: updateSelection
     };
@@ -553,7 +622,51 @@ function initSide(sideHost) {
         var trailText = trail.join('');
         selectedCharLead.textContent = leadText;
         selectedCharTrail.textContent = trailText;
-        selectedCharNumbers.textContent = (leadText.length + trailText.length) + ' unit' + (leadText.length + trailText.length > 1 ? 's' : '');
+        selectedCharNumbers.textContent = '[' + (leadText.length + trailText.length) + ']';
+        updateDetails(leadCharDetails, lead.length ? lead[lead.length - 1] : '');
+        updateDetails(trailCharDetails, trail.length ? trail[trail.length - 1] : '');
+    }
+    function updateDetails(detailsElem, text) {
+        if (!text)
+            detailsElem.style.display = 'none';
+        else
+            detailsElem.style.display = null;
+        var _a = [
+            'symbol', 'hex',
+            'nfc', 'nfd'
+        ].map(function (nm) { return detailsElem.getElementsByClassName(nm)[0]; }), symbolElem = _a[0], hexElem = _a[1], nfcElem = _a[2], nfdElem = _a[3];
+        symbolElem.textContent = text;
+        hexElem.textContent = hexStr(text);
+        var normalized = typeof text.normalize === 'function' && {
+            nfc: text.normalize('NFC'),
+            nfd: text.normalize('NFD')
+        };
+        if (normalized && (normalized.nfc !== text || normalized.nfd !== text)) {
+            if (normalized.nfc !== normalized.nfd) {
+                nfcElem.textContent = hexStr(normalized.nfc);
+                nfdElem.textContent = hexStr(normalized.nfd);
+                nfcElem.style.display = null;
+                nfdElem.style.display = null;
+            }
+            else {
+                nfcElem.textContent = hexStr(normalized.nfc);
+                nfcElem.style.display = null;
+                nfdElem.style.display = 'none';
+            }
+        }
+        else {
+            nfcElem.style.display = 'none';
+            nfdElem.style.display = 'none';
+        }
+    }
+    function hexStr(str) {
+        var hex = '';
+        for (var i = 0; i < str.length; i++) {
+            if (hex)
+                hex += ' ';
+            hex += str.charCodeAt(i).toString(16).toUpperCase();
+        }
+        return hex;
     }
 }
 
@@ -11839,11 +11952,26 @@ function initSide(sideHost) {
       <span class=selectedCharLead></span><span class=selectedCharMid></span><span class=selectedCharTrail></span>
     </div>
     <div class=selectedCharNumbers></div>
+
+    <div class="leadCharDetails charDetails">
+      <div class=symbol></div>
+      <div class=hex></div>
+      <div class=nfc></div>
+      <div class=nfd></div>
+    </div>
+
+    <div class="trailCharDetails  charDetails">
+      <div class=symbol></div>
+      <div class=hex></div>
+      <div class=nfc></div>
+      <div class=nfd></div>
+    </div>
+
   </div>
 
   <script>
 initAll();
-//# sourceMappingURL=index.html.L24.js.map
+//# sourceMappingURL=index.html.L39.js.map
 </script>
 
 

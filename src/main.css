@@ -48,13 +48,13 @@ body {
   background: #f8f8f8;
   border-left: solid 1px #e9e9e9;
   padding: 1em;
-  white-space: nowrap;
   text-align: center;
   overflow: hidden;
 }
 
 #sideHost .selectedChar {
-  font-size: 400%;
+  white-space: nowrap;
+  font-size: 300%;
   height: 1.5em;
   text-shadow: 1px 1px 1px #e7e7e7, -1px -1px 1px #e7e7e7, 1px 6px 7px #00000087;
 }
@@ -91,4 +91,44 @@ body {
   position: relative;
   text-align: right;
   top: -0.5em;
+}
+
+#sideHost .charDetails {
+  position: relative;
+  margin-bottom: 0.5em;
+  border: solid 1px #e5e5e5;
+  background: white;
+  border-radius: 1em;
+  padding-bottom: 0.3em;
+}
+
+#sideHost .charDetails .symbol {
+  font-size: 400%;
+}
+
+#sideHost .charDetails .hex {
+  position: absolute;
+  top: 20%;
+  right: 0.5em;
+  width: 4em;
+  text-align: right;
+  font-family: sans-serif;
+}
+
+#sideHost .charDetails .nfc {
+  position: absolute;
+  left: 0.5em;
+  top: 0.5em;
+  font-size: 90%;
+  font-family: sans-serif;
+  opacity: 0.6;
+}
+
+#sideHost .charDetails .nfd {
+  position: absolute;
+  left: 0.5em;
+  bottom: 0.5em;
+  font-size: 90%;
+  font-family: sans-serif;
+  opacity: 0.6;
 }

@@ -12,7 +12,8 @@ function initEditor(editorHost: HTMLElement, options?: Partial<initEditor.Option
   var editor = CodeMirror(
     editorHost,
     {
-      value: urlText
+      value: urlText,
+      lineWrapping: true
     });
   
   CodeMirror.on(editor, 'changes', handleEditorChanges);
